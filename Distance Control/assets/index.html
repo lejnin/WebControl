@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>WEB Control</title>
+    <meta name="viewport" content="user-scalable=0" />
+</head>
+<body>
+    <div id="panel">
+        <div class="row">
+            <button type="button" data-command="volume-up">&#128266;</button>
+            <button type="button" data-command="volume-down">&#128265;</button>
+            <button type="button" data-command="volume-mute">&#128263;</button>
+        </div>
+
+        <div class="row">
+            <button type="button" data-command="key-left">&#9194;</button>
+            <button type="button" data-command="play">&#9654;</button>
+            <button type="button" data-command="key-right">&#9193;</button>
+            <button type="button" data-command="key-next-youtube">&#9197;</button>
+        </div>
+    </div>
+
+    <div id="touchpad" data-command="mouse-left-click"></div>
+
+    <script>
+
+        try {
+            var http = new XMLHttpRequest;
+            var x = 0;
+            var y = 0;
+            var pauseFlag = false;
+            var pauseValue = 100; // pause between requests on mouse move
+
+            function init() {
+                (screen.width > screen.height && isMobileDevice()) ? showTouchpad() : showPanel();
+            }
+
+            function showPanel() {
+                document.body.classList.remove('touchpad');
+            }
+
+            function showTouchpad() {
+                try {
+                    document.createEvent("TouchEvent");
+                    document.body.classList.add('touchpad');
+                } catch { }
+            }
+
+            function sendRequest(postObject) {
+                http.open("POST", '/', true);
+                http.setRequestHeader("Content-type", "application/json");
+                http.onreadystatechange = function (r) {
+                    if (http.readyState == 4 && http.status == 200) {
+
+                    }
+                };
+                
+                http.send(JSON.stringify(postObject));
+            }
+
+            function isMobileDevice() {
+                return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+            };
+
+            document.addEventListener('click', function (e) {
+                if (e.target.dataset.command !== undefined && http) {
+                    sendRequest({ cmd: e.target.dataset.command });
+                }
+            });
+
+            window.addEventListener("resize", init);
+            document.addEventListener('DOMContentLoaded', init);
+                  
+            (function () {
+                document.getElementById('touchpad').addEventListener("touchstart", function (e) {
+                    x = e.touches[0].screenX;
+                    y = e.touches[0].screenY;
+                });
+                document.getElementById('touchpad').addEventListener("touchmove", function (e) {
+                    if (pauseFlag === true) {
+                        return;
+                    }
+
+                    pauseFlag = true;
+
+                    var postObject = {
+                        cmd: "mouse-move",
+                        x: e.touches[0].screenX - x,
+                        y: e.touches[0].screenY - y
+                    };
+                    x = e.touches[0].screenX;
+                    y = e.touches[0].screenY;
+
+                    sendRequest(postObject);
+                          
+                    setTimeout(function () {
+                        pauseFlag = false;
+                    }, pauseValue);
+                });
+            })();
+
+        } catch {
+            alert(':(');
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        body.touchpad {
+            overflow: hidden;
+        }
+        body.touchpad #touchpad{
+            display: block;
+        }
+
+        body.touchpad #panel{
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            margin: 0px 5px;
+            font-size: 100px;
+            padding: 80px 0;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-content: flex-start;
+            margin-bottom: 15px;
+        }
+
+        #panel {
+            display: block;
+        }
+
+        #touchpad {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background-color: darkgray;
+        }
+    </style>
+</body>
+</html>
