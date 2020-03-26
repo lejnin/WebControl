@@ -9,14 +9,14 @@ namespace WebControlApplication
 {
     class Server
     {
-        private const int TIMEOUT = 8; // Лиммт времени на приём данных.
+        private const int TIMEOUT = 8;
 
-        private bool running = false; //Запущено ли?
+        private bool running = false;
 
         private Controller controller;
-        private readonly GeneralForm form; // доступ к нашей форме
-        private readonly Encoding charEncoder = Encoding.UTF8; // Кодировка
-        private Socket serverSocket; // Нащ сокет
+        private readonly GeneralForm form;
+        private readonly Encoding charEncoder = Encoding.UTF8;
+        private Socket serverSocket;
 
         public Server(GeneralForm form)
         {
@@ -27,7 +27,7 @@ namespace WebControlApplication
         {
             if (running)
             {
-                form.Log("Сервер уже запущен");
+                form.Log("Connection already open");
                 return false;
             }
             
@@ -50,15 +50,14 @@ namespace WebControlApplication
                 serverSocket.ReceiveTimeout = TIMEOUT;
                 serverSocket.SendTimeout = TIMEOUT;
                 running = true;
-                form.Log("Сервер запущен");
+                form.Log("Connection open");
             }
             catch (Exception e) 
             {
-                form.Log("Ошибка при запуске сервера: "+ e.Message);
-                return false; 
+                form.Log("Error: "+ e.Message);
+                return false;
             }
 
-            // Наш поток ждет новые подключения и создает новые потоки.
             Thread requestListenerT = new Thread(() =>
             {
                 while (running)
@@ -67,7 +66,6 @@ namespace WebControlApplication
                     try
                     {
                         clientSocket = serverSocket.Accept();
-                        // Создаем новый поток для нового клиента и продолжаем слушать сокет.
                         Thread requestHandler = new Thread(() =>
                         {
                             clientSocket.ReceiveTimeout = TIMEOUT;
@@ -96,7 +94,7 @@ namespace WebControlApplication
                 try { serverSocket.Close(); }
                 catch { }
                 serverSocket = null;
-                form.Log("Сервер остановлен");
+                form.Log("Connection close");
             }
         }
 
